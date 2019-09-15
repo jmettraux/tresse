@@ -127,7 +127,9 @@ module Tresse
 
       @batches = []
       @eaches = [ nil ]
+
       @final = nil
+      @final_batches = []
       @final_queue = Queue.new
     end
 
@@ -138,7 +140,7 @@ module Tresse
 
       batch = Tresse::Batch.new(self, o ? o : block)
 
-      @batches.push(batch)
+      @batches << batch
       Tresse.enqueue(batch)
     end
 
@@ -189,7 +191,19 @@ module Tresse
     end
 
     def queue_for_final(batch)
-nil
+
+      @final_batches << batch
+
+      return if @final_batches.size < @batches.size
+
+      es = @batches.collect(&:value)
+
+      @final_queue <<
+        if @final.is_a?(Array)
+          es.inject(@final[0], &@final[1])
+        else
+          es.collect(&@final)
+        end
     end
   end
 end

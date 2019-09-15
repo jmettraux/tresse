@@ -21,7 +21,9 @@ describe Tresse::Group do
 
     sleep 0.350
 
-    expect(trace).to eq([ [ 0, 1, 2, 3 ], %w[ a b c ] ])
+    expect(trace.size).to eq(2)
+    expect(trace).to include([ 0, 1, 2, 3 ])
+    expect(trace).to include(%w[ a b c ])
   end
 end
 

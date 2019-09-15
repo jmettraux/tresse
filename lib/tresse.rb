@@ -8,11 +8,11 @@ module Tresse
 
   class << self
 
-    attr_accessor :max_worker_threads
+    attr_accessor :max_work_threads
 
     def init
 
-      @max_worker_threads = 7
+      @max_work_threads = 7
       @work_queue = Queue.new
       @thread_queue = Queue.new
 
@@ -64,13 +64,13 @@ module Tresse
 
     def hand_to_worker_thread(i, batch)
 
-      Thread.new do |t|
+      Thread.new do
         begin
 
-          t[:tress] = true
-          t[:i] = i
+          Thread.current[:tress] = true
+          Thread.current[:i] = i
 
-          batch.process(i)
+          batch.process
 
           @thread_queue << i unless i >= @max_work_threads
 
@@ -87,33 +87,48 @@ module Tresse
 
   class Batch
 
+    attr_reader :group
+    attr_reader :each_index, :value
+
     def initialize(group, block_or_group)
 
       @group = group
       @bog = block_or_group
 
-      @each_index = 0
+      @each_index = -1
+      @value = nil
     end
 
-    def process(i)
+    def process
 
-      args = [ group, i ] + 7 * [ nil ]
+      @each_index += 1
+      @group.send(:hand, self)
+    end
+
+    protected
+
+    def generate
+
+      args = [ group ] + [ nil ] * 7
       args = args[0, @bog.method(:call).arity]
 
-      @bog.call(*args)
+      @value = @bog.call(*args)
     end
   end
 
   class Group
 
     attr_accessor :name
+    attr_reader :batches
 
     def initialize(name)
 
       @name = name
 
-      @queue = Queue.new # queueing batches
+      @batches = []
       @eaches = [ nil ]
+      @final = nil
+      @final_queue = Queue.new
     end
 
     #
@@ -121,8 +136,10 @@ module Tresse
 
     def append(o=nil, &block)
 
-      Tresse.enqueue(
-        Tresse::Batch.new(self, o ? o : block))
+      batch = Tresse::Batch.new(self, o ? o : block)
+
+      @batches.push(batch)
+      Tresse.enqueue(batch)
     end
 
     #
@@ -139,12 +156,41 @@ module Tresse
     # final methods
 
     def inject(target, &block)
+
+      @final = [ target, block ]
+
+      @final_queue.pop
     end
     alias reduce inject
 
-    def collect(target, &block)
+    def collect(&block)
+
+      @final = block
+
+      @final_queue.pop
     end
     alias map collect
+
+    protected
+
+    def hand(batch)
+
+      if batch.each_index == 0
+        batch.send(:generate)
+        Tresse.enqueue(batch)
+      elsif e = @eaches[batch.each_index]
+        args = [ batch.value, batch ]
+        args = args[0, e.method(:call).arity.abs]
+        e.call(*args)
+        Tresse.enqueue(batch)
+      else
+        queue_for_final(batch)
+      end
+    end
+
+    def queue_for_final(batch)
+nil
+    end
   end
 end
 

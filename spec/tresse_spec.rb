@@ -42,5 +42,18 @@ describe Tresse::Group do
     expect(r).to eq(%w[ bb aa ])
     expect(trace.last).to eq(:A)
   end
+
+  it 'injects' do
+
+    r =
+      Tresse::Group.new('test0')
+        .append { [ 'a' ] }
+        .append { [ 'c' ] }
+        .append { [ 'b' ] }
+        .each { |e| e[0] = e[0] * 2 }
+        .inject([]) { |a, e| a << e.first; a.sort }
+
+    expect(r).to eq(%w[ aa bb cc ])
+  end
 end
 

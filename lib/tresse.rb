@@ -39,74 +39,49 @@ module Tresse
       @on_error = block
     end
 
-    def stop
-
-      return if @status == :stopped
-
-      @status = :stopped
-      @thread = nil
-      @work_queue << :stop
-    end
-
-    def start
-
-      return if @status == :running
-
-      run
-    end
-
     protected
 
     def run
 
       @max_work_threads.times { |i| @thread_queue << i }
 
-      @status =
-        :running
+      Thread.new do
+        loop do
+          begin
 
-      @thread =
-        Thread.new do
-            loop do
-              begin
+            i = @thread_queue.pop
+            batch = @work_queue.pop
 
-                batch = @work_queue.pop
+            hand_to_worker_thread(i, batch)
 
-                if @status == :stopped
-                  @work_queue << batch unless batch == :stop
-                  break
-                end
+          rescue => err
 
-                i = @thread_queue.pop
-
-                if @status == :stopped
-                  @work_queue << batch
-                  break
-                end
-
-                hand_to_worker_thread(i, batch)
-
-              rescue => err
-                @on_error.call(:in_loop, err)
-              end
-            end
+            @on_error.call(:in_loop, err)
           end
         end
+      end
     end
 
     def hand_to_worker_thread(i, batch)
 
       Thread.new do |t|
         begin
+
           t[:tress] = true
           t[:i] = i
+
           batch.process(i)
+
           @thread_queue << i unless i >= @max_work_threads
+
         rescue => err
+
           @on_error.call(:in_worker_thread, err)
         end
       end
     end
   end
+    #
   self.init
 
 
@@ -122,7 +97,8 @@ module Tresse
 
     def process(i)
 
-      args = [ group, i, nil, nil, nil, nil ][0, @bog.method(:call).arity]
+      args = [ group, i ] + 7 * [ nil ]
+      args = args[0, @bog.method(:call).arity]
 
       @bog.call(*args)
     end

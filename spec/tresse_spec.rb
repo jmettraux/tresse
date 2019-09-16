@@ -131,12 +131,14 @@ describe Tresse::Group do
         t = g.call.collect(&:to_s)
         expect(t).to eq(%w[ a0 z0 a0 z0 a1 z1 a1 z1 ])
       end
+
+      Tresse.max_work_thread_count = 8
     end
   end
 
   describe '#source_each' do
 
-    it 'queues its result' do
+    it 'queues its result (Array)' do
 
       r =
         Tresse::Group.new('test0')
@@ -145,6 +147,32 @@ describe Tresse::Group do
           .sort
 
       expect(r).to eq([ 0, 0, 1, 1, 2, 2, 3, 4 ])
+    end
+
+    it 'queues its result (Enumerator)' do
+
+      ids = (0..99).to_a
+
+      r =
+        Tresse::Group.new('test0')
+          .source_each(ids.each_slice(25)) { |is| [ is[0], is[-1] ]  }
+          .values
+          #.sort
+
+      expect(r).to eq([ 0, 24, 25, 49, 50, 74, 75, 99 ])
+    end
+
+    it 'queues its result (Hash)' do
+
+      h = { a: %w[ a b c ], d: %w[ d e f ] }
+
+      r =
+        Tresse::Group.new('test0')
+          .source_each(h) { |_, v| v }
+          .values
+          #.sort
+
+      expect(r).to eq(%w[ a b c d e f ])
     end
   end
 end

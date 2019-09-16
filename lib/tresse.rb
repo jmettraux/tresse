@@ -85,7 +85,7 @@ module Tresse
 
   def self.call_block(block, args)
 
-    block.call(*args[0, block.method(:call).arity.abs])
+    block.call(*args[0, block.arity.abs])
   end
 
 
@@ -155,12 +155,12 @@ module Tresse
 
     def source_each(collection, &block)
 
-      if collection.is_a?(Array)
-        collection.each_with_index { |e, i|
-          source { Tresse.call_block(block, [ e, i ]) } }
-      else
+      if collection.is_a?(Hash)
         collection.each { |k, v|
           source { Tresse.call_block(block, [ k, v ]) } }
+      else
+        collection.each_with_index { |e, i|
+          source { Tresse.call_block(block, [ e, i ]) } }
       end
 
       self

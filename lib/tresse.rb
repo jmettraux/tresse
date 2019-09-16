@@ -116,13 +116,14 @@ module Tresse
   class Group
 
     attr_accessor :name
-    attr_reader :batches
+    #attr_reader :batches
 
     def initialize(name=nil)
 
       @name = name
 
       @batches = []
+      @launched = false
       @maps = [ nil ]
 
       @reduce = nil
@@ -138,7 +139,8 @@ module Tresse
       batch = Tresse::Batch.new(self, o ? o : block)
 
       @batches << batch
-      Tresse.enqueue(batch)
+
+      self
     end
 
     #
@@ -148,12 +150,16 @@ module Tresse
 
       @maps << [ :each, block ]
 
+      launch
+
       self
     end
 
     def map(&block)
 
       @maps << [ :map, block ]
+
+      launch
 
       self
     end
@@ -163,6 +169,8 @@ module Tresse
 
     def reduce(target, &block)
 
+      launch
+
       @reduce = [ target, block ]
 
       @reduction_queue.pop
@@ -171,6 +179,8 @@ module Tresse
 
     def flatten
 
+      launch
+
       @reduce = [ [], lambda { |a, e| a.concat(e) } ]
 
       @reduction_queue.pop
@@ -178,6 +188,14 @@ module Tresse
     alias values flatten
 
     protected
+
+    def launch
+
+      return if @launched == true
+      @launched = true
+
+      @batches.each { |b| Tresse.enqueue(b) }
+    end
 
     def receive(batch)
 

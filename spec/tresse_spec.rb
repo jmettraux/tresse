@@ -133,5 +133,19 @@ describe Tresse::Group do
       end
     end
   end
+
+  describe '#source_each' do
+
+    it 'queues its result' do
+
+      r =
+        Tresse::Group.new('test0')
+          .source_each([ 2, 4 ]) { |i| (0..i).to_a }
+          .values
+          .sort
+
+      expect(r).to eq([ 0, 0, 1, 1, 2, 2, 3, 4 ])
+    end
+  end
 end
 

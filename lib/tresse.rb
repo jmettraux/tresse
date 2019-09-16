@@ -153,6 +153,19 @@ module Tresse
       self
     end
 
+    def source_each(collection, &block)
+
+      if collection.is_a?(Array)
+        collection.each_with_index { |e, i|
+          source { call_block(block, [ e, i ]) } }
+      else
+        collection.each { |k, v|
+          source { call_block(block, [ k, v ]) } }
+      end
+
+      self
+    end
+
     #
     # mapping
 
@@ -233,6 +246,11 @@ module Tresse
       target, block = @reduce
 
       @reduction_queue << es.inject(target, &block)
+    end
+
+    def call_block(block, args)
+
+      block.call(*args[0, block.method(:call).arity.abs])
     end
   end
 end

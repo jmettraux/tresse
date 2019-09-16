@@ -15,8 +15,8 @@ describe Tresse::Group do
     trace = []
 
     Tresse::Group.new('test0')
-      .append { (0..3).to_a }
-      .append { ('a'..'c').to_a }
+      .source { (0..3).to_a }
+      .source { ('a'..'c').to_a }
       .each { |e| trace << e }
 
     sleep 0.350
@@ -32,12 +32,9 @@ describe Tresse::Group do
 
     r =
       Tresse::Group.new('test0')
-        .append {
-          trace << :b; sleep 0.0; trace << :B; 'b' }
-        .append {
-          trace << :a; sleep 0.01; trace << :A; 'a' }
-        .collect { |e|
-          e * 2 }
+        .source { trace << :b; sleep 0.0; trace << :B; 'b' }
+        .source { trace << :a; sleep 0.01; trace << :A; 'a' }
+        .collect { |e| e * 2 }
 
     expect(r).to eq(%w[ bb aa ])
     expect(trace.last).to eq(:A)
@@ -47,9 +44,9 @@ describe Tresse::Group do
 
     r =
       Tresse::Group.new('test0')
-        .append { [ 'a' ] }
-        .append { [ 'c' ] }
-        .append { [ 'b' ] }
+        .source { [ 'a' ] }
+        .source { [ 'c' ] }
+        .source { [ 'b' ] }
         .each { |e| e[0] = e[0] * 2 }
         .inject([]) { |a, e| a << e.first; a.sort }
 

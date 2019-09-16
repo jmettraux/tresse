@@ -134,9 +134,9 @@ module Tresse
     end
 
     #
-    # appending methods
+    # sourcing methods
 
-    def append(o=nil, &block)
+    def source(o=nil, &block)
 
       batch = Tresse::Batch.new(self, o ? o : block)
 

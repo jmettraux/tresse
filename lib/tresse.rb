@@ -83,6 +83,12 @@ module Tresse
   self.init
 
 
+  def self.call_block(block, args)
+
+    block.call(*args[0, block.method(:call).arity.abs])
+  end
+
+
   class Batch
 
     attr_reader :group
@@ -106,18 +112,12 @@ module Tresse
 
     def source
 
-      args = [ group ] + [ nil ] * 7
-      args = args[0, @bog.method(:call).arity]
-
-      @value = @bog.call(*args)
+      @value = Tresse.call_block(@bog, [ group ] + [ nil ] * 7)
     end
 
     def map(type, block)
 
-      args = [ @value, self ]
-      args = args[0, block.method(:call).arity.abs]
-
-      r = block.call(*args)
+      r = Tresse.call_block(block, [ @value, self ])
 
       @value = r if type == :map
     end
@@ -157,10 +157,10 @@ module Tresse
 
       if collection.is_a?(Array)
         collection.each_with_index { |e, i|
-          source { call_block(block, [ e, i ]) } }
+          source { Tresse.call_block(block, [ e, i ]) } }
       else
         collection.each { |k, v|
-          source { call_block(block, [ k, v ]) } }
+          source { Tresse.call_block(block, [ k, v ]) } }
       end
 
       self
@@ -246,11 +246,6 @@ module Tresse
       target, block = @reduce
 
       @reduction_queue << es.inject(target, &block)
-    end
-
-    def call_block(block, args)
-
-      block.call(*args[0, block.method(:call).arity.abs])
     end
   end
 end

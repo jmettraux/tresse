@@ -64,16 +64,18 @@ describe Tresse::Group do
 
     it 'processes each batch but does not replace their values' do
 
+t = []
       r =
         Tresse::Group.new('test0')
           .source { (0..3).to_a }
           .source { ('a'..'c').to_a }
-          .each { |e| e.collect { |e| e * 2 } }
+          .each { |e| t << e.collect { |e| e * 2 } }
           .values
 
       [ 0, 1, 2, 3, 'a', 'b', 'c' ].each { |e| expect(r).to include(e) }
       i = r.index(0); expect(r[i + 1]).to eq(1)
       i = r.index('a'); expect(r[i + 1]).to eq('b')
+pp t
     end
   end
 

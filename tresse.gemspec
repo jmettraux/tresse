@@ -13,10 +13,10 @@ Gem::Specification.new do |s|
   s.homepage = 'http://github.com/jmettraux/tresse'
   #s.rubyforge_project = 'rufus'
   s.license = 'MIT'
-  s.summary = 'a stupid each+map+reduce thing'
+  s.summary = 'a stupid source+map+reduce thing'
 
   s.description = %{
-a poorly thought out and stupid each+map+reduce contraption
+a poorly thought out and stupid source+map+reduce contraption
   }.strip
 
   #s.files = `git ls-files`.split("\n")

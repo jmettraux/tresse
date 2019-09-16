@@ -120,7 +120,7 @@ module Tresse
     attr_accessor :name
     attr_reader :batches
 
-    def initialize(name)
+    def initialize(name=nil)
 
       @name = name
 

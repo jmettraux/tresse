@@ -92,5 +92,42 @@ describe Tresse::Group do
       expect(r).to eq(%w[ aa bb cc ])
     end
   end
+
+  describe '.max_work_threads' do
+
+    it 'returns 7 by default' do
+
+      expect(Tresse.max_work_threads).to eq(7)
+    end
+  end
+
+#  describe '.max_work_threads=' do
+#
+#    it 'sets the max_work_threads' do
+#
+#      Tresse.max_work_threads = 6
+#
+#      expect(Tresse.max_work_threads).to eq(6)
+#    end
+#
+#    it 'is respected' do
+#
+#p Tresse.class_eval { @thread_queue.num_waiting }
+#      Tresse.max_work_threads = 1
+#p Tresse.class_eval { @thread_queue.num_waiting }
+#
+#      t = []
+#
+#      r =
+#        Tresse::Group.new
+#          .source { t << :s0; (0..3).to_a }
+#          .source { t << :s1; (3..6).to_a }
+#          .each { |e| t << :ea0; sleep 0.2; t << :ea1 }
+#          .each { |e| t << :eb1; sleep 0.2; t << :eb1 }
+#          .flatten
+#
+#pp t
+#    end
+#  end
 end
 

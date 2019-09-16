@@ -111,6 +111,16 @@ module Tresse
 
       @value = @bog.call(*args)
     end
+
+    def map(type, block)
+
+      args = [ @value, self ]
+      args = args[0, block.method(:call).arity.abs]
+
+      r = block.call(*args)
+
+      @value = r if type == :map
+    end
   end
 
   class Group
@@ -205,20 +215,11 @@ module Tresse
         batch.source
         Tresse.enqueue(batch)
       elsif m = @maps[batch.map_index]
-        map_batch(batch, *m)
+        batch.map(*m)
         Tresse.enqueue(batch)
       else
         queue_for_reduction(batch)
       end
-    end
-
-    def map_batch(batch, type, block)
-
-      args = [ batch.value, batch ]
-      args = args[0, block.method(:call).arity.abs]
-      r = block.call(*args)
-
-      batch.value = r if type == :map
     end
 
     def queue_for_reduction(batch)

@@ -148,20 +148,12 @@ module Tresse
 
     def each(&block)
 
-      @maps << [ :each, block ]
-
-      launch
-
-      self
+      do_map(:each, block)
     end
 
     def map(&block)
 
-      @maps << [ :map, block ]
-
-      launch
-
-      self
+      do_map(:map, block)
     end
 
     #
@@ -169,25 +161,35 @@ module Tresse
 
     def reduce(target, &block)
 
-      launch
-
-      @reduce = [ target, block ]
-
-      @reduction_queue.pop
+      do_reduce(target, block)
     end
     alias inject reduce
 
     def flatten
 
-      launch
-
-      @reduce = [ [], lambda { |a, e| a.concat(e) } ]
-
-      @reduction_queue.pop
+      do_reduce([], lambda { |a, e| a.concat(e) })
     end
     alias values flatten
 
     protected
+
+    def do_map(type, block)
+
+      @maps << [ type, block ]
+
+      launch
+
+      self
+    end
+
+    def do_reduce(target, block)
+
+      @reduce = [ target, block ]
+
+      launch
+
+      @reduction_queue.pop
+    end
 
     def launch
 
@@ -203,14 +205,14 @@ module Tresse
         batch.source
         Tresse.enqueue(batch)
       elsif m = @maps[batch.map_index]
-        do_map(batch, *m)
+        map_batch(batch, *m)
         Tresse.enqueue(batch)
       else
         queue_for_reduction(batch)
       end
     end
 
-    def do_map(batch, type, block)
+    def map_batch(batch, type, block)
 
       args = [ batch.value, batch ]
       args = args[0, block.method(:call).arity.abs]

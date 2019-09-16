@@ -44,12 +44,8 @@ module Tresse
 
       i0 = @work_threads.size
 
-      while @work_threads.size < i
-        @work_threads << make_work_thread
-      end
-      while @work_threads.size > i
-        @work_threads.pop
-      end
+      @work_threads << make_work_thread while @work_threads.size < i
+      @work_threads.pop while @work_threads.size > i
 
       i
     end
@@ -74,7 +70,6 @@ module Tresse
             end
 
             batch.process
-
 
           rescue => err
 

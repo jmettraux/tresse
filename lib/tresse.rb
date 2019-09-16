@@ -88,26 +88,25 @@ module Tresse
   class Batch
 
     attr_reader :group
-    attr_reader :each_index, :value
+    attr_reader :map_index
+    attr_accessor :value
 
     def initialize(group, block_or_group)
 
       @group = group
       @bog = block_or_group
 
-      @each_index = -1
+      @map_index = -1
       @value = nil
     end
 
     def process
 
-      @each_index += 1
-      @group.send(:hand, self)
+      @map_index += 1
+      @group.send(:receive, self)
     end
 
-    protected
-
-    def generate
+    def source
 
       args = [ group ] + [ nil ] * 7
       args = args[0, @bog.method(:call).arity]
@@ -126,11 +125,11 @@ module Tresse
       @name = name
 
       @batches = []
-      @eaches = [ nil ]
+      @maps = [ nil ]
 
-      @final = nil
-      @final_batches = []
-      @final_queue = Queue.new
+      @reduce = nil
+      @reduce_batches = []
+      @reduction_queue = Queue.new
     end
 
     #
@@ -145,65 +144,76 @@ module Tresse
     end
 
     #
-    # step methods
+    # mapping
 
     def each(&block)
 
-      @eaches << block
+      @maps << [ :each, block ]
+
+      self
+    end
+
+    def map(&block)
+
+      @maps << [ :map, block ]
 
       self
     end
 
     #
-    # final methods
+    # reducing
 
-    def inject(target, &block)
+    def reduce(target, &block)
 
-      @final = [ target, block ]
+      @reduce = [ target, block ]
 
-      @final_queue.pop
+      @reduction_queue.pop
     end
-    alias reduce inject
+    alias inject reduce
 
-    def collect(&block)
+    def flatten
 
-      @final = block
+      @reduce = [ [], lambda { |a, e| a.concat(e) } ]
 
-      @final_queue.pop
+      @reduction_queue.pop
     end
-    alias map collect
+    alias values flatten
 
     protected
 
-    def hand(batch)
+    def receive(batch)
 
-      if batch.each_index == 0
-        batch.send(:generate)
+      if batch.map_index == 0
+        batch.source
         Tresse.enqueue(batch)
-      elsif e = @eaches[batch.each_index]
-        args = [ batch.value, batch ]
-        args = args[0, e.method(:call).arity.abs]
-        e.call(*args)
+      elsif m = @maps[batch.map_index]
+        do_map(batch, *m)
         Tresse.enqueue(batch)
       else
-        queue_for_final(batch)
+        queue_for_reduction(batch)
       end
     end
 
-    def queue_for_final(batch)
+    def do_map(batch, type, block)
 
-      @final_batches << batch
+      args = [ batch.value, batch ]
+      args = args[0, block.method(:call).arity.abs]
+      r = block.call(*args)
 
-      return if @final_batches.size < @batches.size
+      batch.value = r if type == :map
+    end
+
+    def queue_for_reduction(batch)
+
+      @reduce_batches << batch
+
+      return if @reduce_batches.size < @batches.size
+      return unless @reduce
 
       es = @batches.collect(&:value)
+      target, block = @reduce
 
-      @final_queue <<
-        if @final.is_a?(Array)
-          es.inject(@final[0], &@final[1])
-        else
-          es.collect(&@final)
-        end
+      @reduction_queue << es.inject(target, &block)
     end
   end
 end

@@ -10,47 +10,87 @@ require 'spec_helper'
 
 describe Tresse::Group do
 
-  it 'calls each on each addition' do
+  describe '#source' do
 
-    trace = []
+    it 'queues its result' do
 
-    Tresse::Group.new('test0')
-      .source { (0..3).to_a }
-      .source { ('a'..'c').to_a }
-      .each { |e| trace << e }
+      r =
+        Tresse::Group.new('test0')
+          .source { (0..3).to_a }
+          .source { (4..9).to_a }
+          .values
+          .sort
 
-    sleep 0.350
-
-    expect(trace.size).to eq(2)
-    expect(trace).to include([ 0, 1, 2, 3 ])
-    expect(trace).to include(%w[ a b c ])
+      expect(r).to eq((0..9).to_a)
+    end
   end
 
-  it 'collects' do
+  describe '#flatten' do
 
-    trace = []
+    it 'returns the values in a single array' do
 
-    r =
-      Tresse::Group.new('test0')
-        .source { trace << :b; sleep 0.0; trace << :B; 'b' }
-        .source { trace << :a; sleep 0.01; trace << :A; 'a' }
-        .collect { |e| e * 2 }
+      r =
+        Tresse::Group.new('test0')
+          .source { (0..4).to_a }
+          .source { ('a'..'c').to_a }
+          .flatten
 
-    expect(r).to eq(%w[ bb aa ])
-    expect(trace.last).to eq(:A)
+      expect(r.size).to eq(8)
+      [ 0, 1, 2, 3, 4, 'a', 'b', 'c' ].each { |e| expect(r).to include(e) }
+      i = r.index(3); expect(r[i + 1]).to eq(4)
+      i = r.index('a'); expect(r[i + 1]).to eq('b')
+    end
   end
 
-  it 'injects' do
+  describe '#map' do
 
-    r =
-      Tresse::Group.new('test0')
-        .source { [ 'a' ] }
-        .source { [ 'c' ] }
-        .source { [ 'b' ] }
-        .each { |e| e[0] = e[0] * 2 }
-        .inject([]) { |a, e| a << e.first; a.sort }
+    it 'replaces each batch value with its result' do
 
-    expect(r).to eq(%w[ aa bb cc ])
+      r =
+        Tresse::Group.new('test0')
+          .source { (0..3).to_a }
+          .source { ('a'..'c').to_a }
+          .map { |e| e.collect { |e| e * 2 } }
+          .values
+
+      expect(r.size).to eq(7)
+      [ 0, 2, 4, 6, 'aa', 'bb', 'cc' ].each { |e| expect(r).to include(e) }
+      i = r.index(0); expect(r[i + 1]).to eq(2)
+      i = r.index('aa'); expect(r[i + 1]).to eq('bb')
+    end
+  end
+
+  describe '#each' do
+
+    it 'processes each batch but does not replace their values' do
+
+      r =
+        Tresse::Group.new('test0')
+          .source { (0..3).to_a }
+          .source { ('a'..'c').to_a }
+          .each { |e| e.collect { |e| e * 2 } }
+          .values
+
+      [ 0, 1, 2, 3, 'a', 'b', 'c' ].each { |e| expect(r).to include(e) }
+      i = r.index(0); expect(r[i + 1]).to eq(1)
+      i = r.index('a'); expect(r[i + 1]).to eq('b')
+    end
+  end
+
+  describe '#inject' do
+
+    it 'injects' do
+
+      r =
+        Tresse::Group.new('test0')
+          .source { [ 'a' ] }
+          .source { [ 'c' ] }
+          .source { [ 'b' ] }
+          .each { |e| e[0] = e[0] * 2; 'X' }
+          .inject([]) { |a, e| a << e.first; a.sort }
+
+      expect(r).to eq(%w[ aa bb cc ])
+    end
   end
 end
 

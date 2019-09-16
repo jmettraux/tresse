@@ -8,23 +8,25 @@ module Tresse
 
   class << self
 
-    attr_accessor :max_work_threads
+    attr_accessor :max_work_thread_count
 
     def init
 
-      @max_work_threads = 7
+      @max_work_thread_count = 7
       @work_queue = Queue.new
-      @thread_queue = Queue.new
 
-      @on_error = lambda do |where, err|
-        puts "-" * 80
-        p where
-        p err
-        puts err.backtrace
-        puts "-" * 80
-      end
+      @on_error =
+        lambda do |where, err|
+          puts "-" * 80
+          p where
+          p err
+          puts err.backtrace
+          puts "-" * 80
+        end
 
-      run
+      @work_threads =
+        @max_work_thread_count.times
+          .collect { |i| make_work_thread(i) }
     end
 
     def enqueue(batch)
@@ -41,42 +43,24 @@ module Tresse
 
     protected
 
-    def run
-
-      @max_work_threads.times { |i| @thread_queue << i }
+    def make_work_thread(i)
 
       Thread.new do
+
+        Thread.current[:tresse] = true
+        Thread.current[:i] = i
+
         loop do
           begin
 
-            i = @thread_queue.pop
             batch = @work_queue.pop
 
-            hand_to_worker_thread(i, batch)
+            batch.process
 
           rescue => err
 
-            @on_error.call(:in_loop, err)
+            @on_error.call(:in_worker_thread, err)
           end
-        end
-      end
-    end
-
-    def hand_to_worker_thread(i, batch)
-
-      Thread.new do
-        begin
-
-          Thread.current[:tress] = true
-          Thread.current[:i] = i
-
-          batch.process
-
-          @thread_queue << i
-
-        rescue => err
-
-          @on_error.call(:in_worker_thread, err)
         end
       end
     end

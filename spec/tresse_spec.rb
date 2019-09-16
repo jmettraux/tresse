@@ -93,19 +93,19 @@ describe Tresse::Group do
     end
   end
 
-  describe '.max_work_threads' do
+  describe '.max_work_thread_count' do
 
     it 'returns 7 by default' do
 
-      expect(Tresse.max_work_threads).to eq(7)
+      expect(Tresse.max_work_thread_count).to eq(7)
     end
   end
 
-#  describe '.max_work_threads=' do
+#  describe '.max_work_thread_count=' do
 #
 #    it 'sets the max_work_threads' do
 #
-#      Tresse.max_work_threads = 6
+#      Tresse.max_work_thread_count = 6
 #
 #      expect(Tresse.max_work_threads).to eq(6)
 #    end
@@ -113,7 +113,7 @@ describe Tresse::Group do
 #    it 'is respected' do
 #
 #p Tresse.class_eval { @thread_queue.num_waiting }
-#      Tresse.max_work_threads = 1
+#      Tresse.max_work_thread_count = 1
 #p Tresse.class_eval { @thread_queue.num_waiting }
 #
 #      t = []

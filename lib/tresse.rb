@@ -72,7 +72,7 @@ module Tresse
 
           batch.process
 
-          @thread_queue << i unless i >= @max_work_threads
+          @thread_queue << i
 
         rescue => err
 

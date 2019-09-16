@@ -8,12 +8,10 @@ module Tresse
 
   class << self
 
-    attr_accessor :max_work_thread_count
-
     def init
 
-      @max_work_thread_count = 7
       @work_queue = Queue.new
+      @work_threads = 8.times.collect { |i| make_work_thread }
 
       @on_error =
         lambda do |where, err|
@@ -23,10 +21,6 @@ module Tresse
           puts err.backtrace
           puts "-" * 80
         end
-
-      @work_threads =
-        @max_work_thread_count.times
-          .collect { |i| make_work_thread(i) }
     end
 
     def enqueue(batch)
@@ -41,21 +35,46 @@ module Tresse
       @on_error = block
     end
 
+    def max_work_thread_count
+
+      @work_threads.size
+    end
+
+    def max_work_thread_count=(i)
+
+      i0 = @work_threads.size
+
+      while @work_threads.size < i
+        @work_threads << make_work_thread
+      end
+      while @work_threads.size > i
+        @work_threads.pop
+      end
+
+      i
+    end
+
     protected
 
-    def make_work_thread(i)
+    def make_work_thread
 
       Thread.new do
 
-        Thread.current[:tresse] = true
-        Thread.current[:i] = i
+        t = Thread.current
+        t[:tresse] = true
 
         loop do
           begin
 
             batch = @work_queue.pop
 
+            unless @work_threads.include?(t)
+              @work_queue << batch
+              break
+            end
+
             batch.process
+
 
           rescue => err
 

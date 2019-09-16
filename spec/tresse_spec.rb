@@ -95,39 +95,43 @@ describe Tresse::Group do
 
   describe '.max_work_thread_count' do
 
-    it 'returns 7 by default' do
+    it 'returns 8 by default' do
 
-      expect(Tresse.max_work_thread_count).to eq(7)
+      expect(Tresse.max_work_thread_count).to eq(8)
     end
   end
 
-#  describe '.max_work_thread_count=' do
-#
-#    it 'sets the max_work_threads' do
-#
-#      Tresse.max_work_thread_count = 6
-#
-#      expect(Tresse.max_work_threads).to eq(6)
-#    end
-#
-#    it 'is respected' do
-#
-#p Tresse.class_eval { @thread_queue.num_waiting }
-#      Tresse.max_work_thread_count = 1
-#p Tresse.class_eval { @thread_queue.num_waiting }
-#
-#      t = []
-#
-#      r =
-#        Tresse::Group.new
-#          .source { t << :s0; (0..3).to_a }
-#          .source { t << :s1; (3..6).to_a }
-#          .each { |e| t << :ea0; sleep 0.2; t << :ea1 }
-#          .each { |e| t << :eb1; sleep 0.2; t << :eb1 }
-#          .flatten
-#
-#pp t
-#    end
-#  end
+  describe '.max_work_thread_count=' do
+
+    it 'sets the max' do
+
+      Tresse.max_work_thread_count = 6
+
+      expect(Tresse.max_work_thread_count).to eq(6)
+    end
+
+    it 'is respected' do
+
+      Tresse.max_work_thread_count = 1
+
+      expect(Tresse.max_work_thread_count).to eq(1)
+      expect(Tresse.class_eval { @work_threads.size }).to eq(1)
+
+      g = lambda {
+        t = []
+        Tresse::Group.new
+          .source { (0..3).to_a }
+          .source { (3..6).to_a }
+          .each { |e| t << :a0; sleep 0.001; t << :z0 }
+          .each { |e| t << :a1; sleep 0.001; t << :z1 }
+          .flatten
+        t }
+
+      1_000.times do
+        t = g.call.collect(&:to_s)
+        expect(t).to eq(%w[ a0 z0 a0 z0 a1 z1 a1 z1 ])
+      end
+    end
+  end
 end
 

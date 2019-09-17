@@ -188,7 +188,13 @@ module Tresse
 
     def flatten
 
-      do_reduce([], lambda { |a, e| a.concat(e) })
+      do_reduce(
+        [],
+        lambda { |a, e|
+          case e
+          when Array then a.concat(e)
+          else a.push(e)
+          end })
     end
     alias values flatten
 

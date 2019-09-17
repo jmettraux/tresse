@@ -40,6 +40,21 @@ describe Tresse::Group do
       i = r.index(3); expect(r[i + 1]).to eq(4)
       i = r.index('a'); expect(r[i + 1]).to eq('b')
     end
+
+    it 'does not mind non-arrays' do
+
+      r =
+        Tresse::Group.new('test0')
+          .source { (0..4).to_a }
+          .source { { a: 0, b: 1 } }
+          .source { :nada }
+          .flatten
+
+      expect(r.size).to eq(7)
+
+      [ 0, 1, 2, 3, 4, { a: 0, b: 1 }, :nada ].each { |e|
+        expect(r).to include(e) }
+    end
   end
 
   describe '#map' do

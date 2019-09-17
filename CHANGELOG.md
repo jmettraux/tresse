@@ -2,6 +2,9 @@
 # CHANGELOG.md
 
 
+## tresse 1.1.2  not yet released
+
+
 ## tresse 1.1.1  released 2019-09-17
 
 * Refine Tresse::Group#source_each

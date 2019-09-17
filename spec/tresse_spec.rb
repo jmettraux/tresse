@@ -48,12 +48,13 @@ describe Tresse::Group do
           .source { (0..4).to_a }
           .source { { a: 0, b: 1 } }
           .source { :nada }
+          .source { (0..3).each_with_index }
           .flatten
 
-      expect(r.size).to eq(7)
+      expect(r.size).to eq(11)
 
-      [ 0, 1, 2, 3, 4, { a: 0, b: 1 }, :nada ].each { |e|
-        expect(r).to include(e) }
+      [ *(0..4), { a: 0, b: 1 }, :nada, *(0..3).each_with_index ]
+        .each { |e| expect(r).to include(e) }
     end
   end
 

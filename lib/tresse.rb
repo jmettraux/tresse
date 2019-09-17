@@ -191,9 +191,10 @@ module Tresse
       do_reduce(
         [],
         lambda { |a, e|
-          case e
-          when Array then a.concat(e)
-          else a.push(e)
+          if e.respond_to?(:to_a) && ! e.is_a?(Hash)
+            a.concat(e.to_a)
+          else
+            a.push(e)
           end })
     end
     alias values flatten

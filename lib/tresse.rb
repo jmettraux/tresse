@@ -144,11 +144,9 @@ module Tresse
     #
     # sourcing methods
 
-    def source(o=nil, &block)
+    def source(&block)
 
-      batch = Tresse::Batch.new(self, o ? o : block)
-
-      @batches << batch
+      @batches << Tresse::Batch.new(self, block)
 
       self
     end

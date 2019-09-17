@@ -126,7 +126,6 @@ module Tresse
   class Group
 
     attr_accessor :name
-    #attr_reader :batches
 
     def initialize(name=nil)
 
@@ -137,6 +136,7 @@ module Tresse
       @maps = [ nil ]
 
       @reduce = nil
+      @reduce_mutex = Mutex.new
       @reduce_batches = []
       @reduction_queue = Queue.new
     end
@@ -242,15 +242,18 @@ module Tresse
 
     def queue_for_reduction(batch)
 
-      @reduce_batches << batch
+      @reduce_mutex.synchronize do
 
-      return if @reduce_batches.size < @batches.size
-      return unless @reduce
+        @reduce_batches << batch
 
-      es = @batches.collect(&:value)
-      target, block = @reduce
+        return if @reduce_batches.size < @batches.size
+        return unless @reduce
 
-      @reduction_queue << es.inject(target, &block)
+        es = @batches.collect(&:value)
+        target, block = @reduce
+
+        @reduction_queue << es.inject(target, &block)
+      end
     end
   end
 end

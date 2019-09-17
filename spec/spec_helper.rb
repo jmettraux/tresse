@@ -10,3 +10,10 @@ require 'pp'
 require 'tresse'
 
 
+RSpec.configure do |c|
+
+  c.alias_example_to(:they)
+  c.alias_example_to(:so)
+  #c.include(Helpers)
+end
+

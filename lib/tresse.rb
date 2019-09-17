@@ -12,15 +12,6 @@ module Tresse
 
       @work_queue = Queue.new
       @work_threads = 8.times.collect { |i| make_work_thread }
-
-      @on_error =
-        lambda do |where, err|
-          puts "-" * 80
-          p where
-          p err
-          puts err.backtrace
-          puts "-" * 80
-        end
     end
 
     def enqueue(batch)
@@ -28,11 +19,6 @@ module Tresse
       @work_queue << batch
 
       batch.group
-    end
-
-    def on_error(&block)
-
-      @on_error = block
     end
 
     def max_work_thread_count
@@ -73,7 +59,7 @@ module Tresse
 
           rescue => err
 
-            @on_error.call(:in_worker_thread, err)
+            batch.error = err
           end
         end
       end
@@ -95,6 +81,7 @@ module Tresse
     attr_reader :map_index
     attr_reader :completed
     attr_accessor :value
+    attr_reader :error
 
     def initialize(group, block_or_group)
 
@@ -127,6 +114,12 @@ module Tresse
     def complete
 
       @completed = true
+    end
+
+    def error=(err)
+
+      @error = err
+      @group.send(:receive, self)
     end
   end
 
@@ -222,7 +215,11 @@ module Tresse
 
       launch
 
-      @reduction_queue.pop
+      r = @reduction_queue.pop
+
+      raise r.error if r.is_a?(Tresse::Batch)
+
+      r
     end
 
     def launch
@@ -235,7 +232,9 @@ module Tresse
 
     def receive(batch)
 
-      if batch.map_index == 0
+      if batch.error
+        @reduction_queue << batch
+      elsif batch.map_index == 0
         batch.source
         Tresse.enqueue(batch)
       elsif m = @maps[batch.map_index]

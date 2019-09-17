@@ -191,5 +191,21 @@ describe Tresse::Group do
       expect(r).to eq(%w[ a b c d e f ])
     end
   end
+
+  context 'errors' do
+
+    they 'are catched and reraised at reduction level' do
+
+      expect {
+        Tresse::Group.new('test0')
+          .source { [ 1, 2 ] }
+          .source { [ 3, 4 ] }
+          .map { |a| fail 'too bad!' }
+          .values
+      }.to raise_error(
+        RuntimeError, 'too bad!'
+      )
+    end
+  end
 end
 

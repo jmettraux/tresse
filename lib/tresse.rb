@@ -93,6 +93,7 @@ module Tresse
 
     attr_reader :group
     attr_reader :map_index
+    attr_reader :completed
     attr_accessor :value
 
     def initialize(group, block_or_group)
@@ -102,6 +103,7 @@ module Tresse
 
       @map_index = -1
       @value = nil
+      @completed = false
     end
 
     def process
@@ -121,6 +123,11 @@ module Tresse
 
       @value = r if type == :map
     end
+
+    def complete
+
+      @completed = true
+    end
   end
 
   class Group
@@ -137,7 +144,6 @@ module Tresse
 
       @reduce = nil
       @reduce_mutex = Mutex.new
-      @reduce_batches = []
       @reduction_queue = Queue.new
     end
 
@@ -244,10 +250,10 @@ module Tresse
 
       @reduce_mutex.synchronize do
 
-        @reduce_batches << batch
+        batch.complete
 
-        return if @reduce_batches.size < @batches.size
         return unless @reduce
+        return if @batches.find { |b| ! b.completed }
 
         es = @batches.collect(&:value)
         target, block = @reduce

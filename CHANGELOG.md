@@ -2,6 +2,9 @@
 # CHANGELOG.md
 
 
+## tresse 1.2.1  not yet released
+
+
 ## tresse 1.2.0  released 2019-09-17
 
 * Re-raise errors at reduction stage

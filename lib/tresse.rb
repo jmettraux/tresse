@@ -224,6 +224,8 @@ module Tresse
 
     def launch
 
+      fail RuntimeError.new('no sources defined') if @batches.empty?
+
       return if @launched == true
       @launched = true
 

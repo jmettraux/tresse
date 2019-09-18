@@ -56,6 +56,14 @@ describe Tresse::Group do
       [ *(0..4), { a: 0, b: 1 }, :nada, *(0..3).each_with_index ]
         .each { |e| expect(r).to include(e) }
     end
+
+    it 'fails if there are no sources' do
+
+      expect {
+        Tresse::Group.new
+          .flatten
+      }.to raise_error(RuntimeError, 'no sources defined')
+    end
   end
 
   describe '#map' do
@@ -74,6 +82,14 @@ describe Tresse::Group do
       i = r.index(0); expect(r[i + 1]).to eq(2)
       i = r.index('aa'); expect(r[i + 1]).to eq('bb')
     end
+
+    it 'fails if there are no sources' do
+
+      expect {
+        Tresse::Group.new
+          .map { |e| e }
+      }.to raise_error(RuntimeError, 'no sources defined')
+    end
   end
 
   describe '#each' do
@@ -91,6 +107,14 @@ describe Tresse::Group do
       i = r.index(0); expect(r[i + 1]).to eq(1)
       i = r.index('a'); expect(r[i + 1]).to eq('b')
     end
+
+    it 'fails if there are no sources' do
+
+      expect {
+        Tresse::Group.new
+          .each { |e| }
+      }.to raise_error(RuntimeError, 'no sources defined')
+    end
   end
 
   describe '#inject' do
@@ -106,6 +130,14 @@ describe Tresse::Group do
           .inject([]) { |a, e| a << e.first; a.sort }
 
       expect(r).to eq(%w[ aa bb cc ])
+    end
+
+    it 'fails if there are no sources' do
+
+      expect {
+        Tresse::Group.new
+          .inject([]) { |a, e| a }
+      }.to raise_error(RuntimeError, 'no sources defined')
     end
   end
 
@@ -189,6 +221,24 @@ describe Tresse::Group do
           #.sort
 
       expect(r).to eq(%w[ a b c d e f ])
+    end
+
+    it 'lets mapping fail if there are no sources' do
+
+      expect {
+        Tresse::Group.new
+          .source_each([]) { |e| e }
+          .each { |e| }
+      }.to raise_error(RuntimeError, 'no sources defined')
+    end
+
+    it 'lets reduction fail if there are no sources' do
+
+      expect {
+        Tresse::Group.new
+          .source_each([]) { |e| e }
+          .values
+      }.to raise_error(RuntimeError, 'no sources defined')
     end
   end
 
